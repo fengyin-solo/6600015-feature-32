@@ -93,9 +93,15 @@ export default function Dashboard() {
   const clearHighlightedTaskId = useTaskStore(s => s.clearHighlightedTaskId)
 
   const selectedTask = useTaskStore(s => s.selectedTask)
+  const tasks = useTaskStore(s => s.tasks)
+  const selectTask = useTaskStore(s => s.selectTask)
 
   useEffect(() => {
     if (!highlightedTaskId) return
+    if (!selectedTask || selectedTask.id !== highlightedTaskId) {
+      const found = tasks.find(t => t.id === highlightedTaskId)
+      if (found) selectTask(found)
+    }
     setActiveTab('tasks')
     setTablePage(1)
     setDrawerOpen(true)
@@ -119,7 +125,7 @@ export default function Dashboard() {
       clearInterval(scrollInterval)
       clearTimeout(clearTimer)
     }
-  }, [highlightedTaskId, clearHighlightedTaskId])
+  }, [highlightedTaskId, clearHighlightedTaskId, selectedTask, tasks, selectTask])
 
   const handleAddTask = () => {
     if (!newTaskName) return
