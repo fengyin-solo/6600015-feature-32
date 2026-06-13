@@ -44,10 +44,12 @@ interface TaskStore {
   nodes: ClusterNode[]
   metrics: MetricsSnapshot[]
   selectedTask: Task | null
-  addTask: (name: string) => void
+  highlightedTaskId: string | null
+  addTask: (name: string) => string
   retryTask: (id: string) => void
   cancelTask: (id: string) => void
   selectTask: (t: Task | null) => void
+  clearHighlightedTaskId: () => void
   refreshNodes: () => void
   addMetric: () => void
 }
@@ -64,6 +66,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     nodeCount: 5,
   })),
   selectedTask: null,
+  highlightedTaskId: null,
   addTask: (name) => {
     const task: Task = {
       id: `task-${Date.now()}`,
@@ -71,7 +74,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       node: get().nodes[Math.floor(Math.random() * get().nodes.length)].name,
       createdAt: Date.now(), retries: 0, maxRetries: 3, logs: [`[INFO] Task ${name} queued`],
     }
-    set({ tasks: [task, ...get().tasks] })
+    set({ tasks: [task, ...get().tasks], highlightedTaskId: task.id, selectedTask: task })
+    return task.id
   },
   retryTask: (id) => set({
     tasks: get().tasks.map(t => t.id === id ? { ...t, status: 'pending', retries: t.retries + 1, logs: [...t.logs, '[INFO] Retrying...'] } : t)
@@ -80,6 +84,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     tasks: get().tasks.map(t => t.id === id ? { ...t, status: 'failed' as TaskStatus, logs: [...t.logs, '[WARN] Cancelled by user'] } : t)
   }),
   selectTask: (t) => set({ selectedTask: t }),
+  clearHighlightedTaskId: () => set({ highlightedTaskId: null }),
   refreshNodes: () => set({ nodes: mockNodes() }),
   addMetric: () => {
     const m: MetricsSnapshot = {
